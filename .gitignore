@@ -1,0 +1,17 @@
+# Virtual Environment
+venv/
+env/
+.venv/
+.env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Models (optional, if you don't want to push the models, but we'll leave them if they're small. Usually it's good practice not to push large models, but let's exclude pkl for now if they want, but wait, the workflow says "disimpan via joblib" and maybe they want to push the models to Github? It's better to just ignore __pycache__ and venv).
+# model/*.pkl
+
+# OS generated files
+.DS_Store
+Thumbs.db

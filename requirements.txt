@@ -1,0 +1,12 @@
+pandas
+scikit-learn
+joblib
+nltk
+networkx
+streamlit
+deep-translator
+tqdm
+rouge-score
+matplotlib
+seaborn
+PySastrawi
