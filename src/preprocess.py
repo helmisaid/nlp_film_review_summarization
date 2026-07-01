@@ -9,6 +9,10 @@ stop_words = set(factory.get_stop_words())
 custom_stopwords = {'yg', 'dg', 'dr', 'dgn', 'saja', 'movie', 'film', 'br', 'nya', 'bahwa', 'ke'}
 stop_words.update(custom_stopwords)
 
+# Mengeluarkan kata-kata negasi penting dari stopwords agar tidak dihapus (Negation Handling)
+negation_words = {'tidak', 'bukan', 'tanpa', 'kurang', 'jangan', 'tiada', 'belum', 'tak', 'tidaklah', 'bukanlah'}
+stop_words = stop_words - negation_words
+
 def clean_text(text):
     """
     Melakukan pra-pemrosesan teks (preprocessing) Bahasa Indonesia:

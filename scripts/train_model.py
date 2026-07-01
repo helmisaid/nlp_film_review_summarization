@@ -98,10 +98,10 @@ if __name__ == "__main__":
         print(f"Bentuk representasi vectorizer X_train_vec: {X_train_vec.shape}")
         print(f"Bentuk representasi vectorizer X_test_vec: {X_test_vec.shape}")
         
-        # 1.6 — Pelatihan Model SVM
+        # 1.6 — Pelatihan Model SVM (Konfigurasi Final)
         print("\n--- Memulai Tahap 1.6: Pelatihan Model SVM ---")
-        print("Melatih model SVM (Linear Kernel)...")
-        model_svm = SVC(kernel='linear', C=1.0, probability=True)
+        print("Melatih model SVM (Linear Kernel, C=1.0)...")
+        model_svm = SVC(kernel='linear', C=1.0)
         model_svm.fit(X_train_vec, y_train)
         print("Pelatihan model SVM selesai!")
         

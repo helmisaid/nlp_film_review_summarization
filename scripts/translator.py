@@ -71,8 +71,7 @@ def translate_movie_reviews(input_file, output_file, max_rows=1000):
 
 # --- Cara Menjalankan Skrip ---
 if __name__ == "__main__":
-    # Sesuaikan 'nama_file_input.csv' dengan nama file asli bahasa Inggris Anda
-    FILE_INPUT = "dataset/IMDB Dataset.csv" 
-    FILE_OUTPUT = "dataset/IMDB Dataset_Indonesia.csv"
+    FILE_INPUT = "data/raw/IMDB Dataset.csv" 
+    FILE_OUTPUT = "data/processed/IMDB Dataset_Indonesia.csv"
     
-    translate_movie_reviews(FILE_INPUT, FILE_OUTPUT)
+    translate_movie_reviews(FILE_INPUT, FILE_OUTPUT, max_rows=5000)
