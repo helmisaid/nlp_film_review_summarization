@@ -157,6 +157,7 @@ nlp_film_reviews_summarization/
 - [ ] Simpan vectorizer: `joblib.dump(vectorizer, 'model/vectorizer.pkl')`
 - [ ] Verifikasi file tersimpan dengan mengecek ukuran file
 
+
 ---
 
 ## 📌 TAHAP 2: Perancangan Basis Data Relasional
