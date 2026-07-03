@@ -22,114 +22,188 @@ st.set_page_config(
 # --- Custom CSS ---
 st.markdown("""
 <style>
-/* ---- Global ---- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* ---- Global Styles ---- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif;
+    background-color: #0b0f19;
+    color: #f1f5f9;
 }
 
-/* ---- Header / hero ---- */
+/* ---- Header & Hero Section ---- */
+.hero-container {
+    padding: 2.5rem 1.5rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
 .hero-title {
-    font-size: 2.6rem;
+    font-size: 3.2rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.03em;
 }
 .hero-subtitle {
-    font-size: 1.05rem;
-    color: #888;
-    margin-bottom: 2rem;
+    font-size: 1.15rem;
+    color: #94a3b8;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.6;
 }
 
-/* ---- Film card ---- */
+/* ---- Glassmorphism Film Card ---- */
 .film-card {
-    background: linear-gradient(145deg, #1e1e2e, #2a2a3d);
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
-    padding: 0;
     overflow: hidden;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    height: 100%;
+    cursor: pointer;
 }
 .film-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25);
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(129, 140, 248, 0.5);
+    box-shadow: 0 15px 35px rgba(99, 102, 241, 0.25);
 }
 .film-card img {
     width: 100%;
-    height: 280px;
+    height: 340px;
     object-fit: cover;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    transition: transform 0.5s ease;
+}
+.film-card:hover img {
+    transform: scale(1.05);
 }
 .film-card-body {
-    padding: 1rem 1.1rem 1.2rem;
+    padding: 1.3rem;
 }
 .film-card-title {
-    font-size: 1.05rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    color: #e0e0e0;
-    margin-bottom: 0.25rem;
+    color: #f8fafc;
+    margin-bottom: 0.4rem;
+    line-height: 1.3;
 }
 .film-card-genre {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     color: #a78bfa;
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-/* ---- Detail page header ---- */
+/* ---- Detail Page Elements ---- */
+.detail-container {
+    background: rgba(17, 24, 39, 0.5);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
 .detail-title {
-    font-size: 2rem;
+    font-size: 2.6rem;
     font-weight: 800;
-    color: #e0e0e0;
-    margin-bottom: 0.3rem;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
 }
 .detail-genre {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     color: #a78bfa;
     font-weight: 600;
-    margin-bottom: 0.6rem;
+    margin-bottom: 1.2rem;
 }
 .detail-desc {
-    font-size: 0.95rem;
-    color: #b0b0b0;
+    font-size: 1.05rem;
+    color: #cbd5e1;
+    line-height: 1.75;
+}
+
+/* ---- Custom Summary Boxes ---- */
+.summary-box {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+.summary-pos {
+    border-left: 5px solid #10b981;
+    box-shadow: inset 5px 0 15px rgba(16, 185, 129, 0.05);
+}
+.summary-neg {
+    border-left: 5px solid #ef4444;
+    box-shadow: inset 5px 0 15px rgba(239, 68, 68, 0.05);
+}
+.summary-box-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.title-pos { color: #34d399; }
+.title-neg { color: #f87171; }
+
+.summary-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: #e2e8f0;
+}
+.summary-item {
+    font-size: 0.98rem;
     line-height: 1.65;
+    margin-bottom: 0.75rem;
+}
+.summary-item:last-child {
+    margin-bottom: 0;
 }
 
-/* ---- Metrics ---- */
+/* ---- Streamlit Widgets Styling ---- */
 div[data-testid="stMetric"] {
-    background: linear-gradient(145deg, #1e1e2e, #2a2a3d);
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(17, 24, 39, 0.6) !important;
+    border-radius: 14px !important;
+    padding: 1.2rem 1.5rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* ---- Summary boxes ---- */
-.summary-header-pos {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #34d399;
-    margin-bottom: 0.5rem;
-}
-.summary-header-neg {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #f87171;
-    margin-bottom: 0.5rem;
+/* Form Styling */
+.stForm {
+    background: rgba(17, 24, 39, 0.4) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 2rem !important;
 }
 
-/* ---- Buttons general ---- */
-div.stButton > button {
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.2s ease;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
 }
-
-/* ---- Divider ---- */
-hr {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    margin: 2rem 0;
+::-webkit-scrollbar-track {
+    background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -163,7 +237,16 @@ def load_data():
 # Inisialisasi session state
 # =====================================================================
 
-if "selected_film" not in st.session_state:
+# Ambil ID film dari parameter query URL jika ada (Routing URL)
+query_params = st.query_params
+selected_id_param = query_params.get("id", None)
+
+if selected_id_param is not None:
+    try:
+        st.session_state["selected_film"] = int(selected_id_param)
+    except ValueError:
+        st.session_state["selected_film"] = None
+else:
     st.session_state["selected_film"] = None
 
 # Muat data & model
@@ -180,14 +263,15 @@ if st.session_state["selected_film"] is None:
     # 3.3 — Halaman Utama: Katalog Film
     # ==================================================================
 
-    st.markdown('<p class="hero-title">🎬 Film Review Summarizer</p>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="hero-subtitle">'
-        'Sistem Peringkasan Ulasan Film Berbasis Graf Semantik — '
-        'Pilih film untuk melihat ringkasan sentimen dan tulis ulasan baru.'
-        '</p>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+    <div class="hero-container">
+        <p class="hero-title">🎬 Film Review Summarizer</p>
+        <p class="hero-subtitle">
+            Sistem Peringkasan Ulasan Film Berbasis Graf Semantik — 
+            Pilih film untuk melihat ringkasan sentimen dan tulis ulasan baru.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -206,27 +290,23 @@ if st.session_state["selected_film"] is None:
             with col:
                 # Poster film
                 poster_url = film["gambar"] if pd.notna(film["gambar"]) and str(film["gambar"]).startswith("http") and len(str(film["gambar"])) > 10 else None
-                if poster_url:
-                    st.image(poster_url, use_container_width=True)
-                else:
-                    # Placeholder visual jika URL poster tidak valid
-                    st.markdown(
-                        f'<div style="width:100%;height:280px;background:linear-gradient(135deg,#667eea,#764ba2);'
-                        f'border-radius:12px;display:flex;align-items:center;justify-content:center;'
-                        f'font-size:3rem;">🎬</div>',
-                        unsafe_allow_html=True,
-                    )
-
-                # Nama film
-                st.subheader(film["nama_film"])
-
-                # Genre
-                st.caption(f"🎭 {film['genre']}")
-
-                # Tombol Lihat Detail
-                if st.button("📋 Lihat Detail", key=f"btn_{film['id_film']}"):
-                    st.session_state["selected_film"] = int(film["id_film"])
-                    st.rerun()
+                
+                # Desain HTML Card yang premium & clickable
+                card_html = f"""
+                <a href="/?id={film['id_film']}" target="_self" style="text-decoration: none; color: inherit;">
+                    <div class="film-card">
+                        {f'<img src="{poster_url}" alt="{film["nama_film"]}" />' if poster_url else 
+                         f'<div style="width:100%;height:340px;background:linear-gradient(135deg,#6366f1,#a855f7);'
+                         f'display:flex;align-items:center;justify-content:center;font-size:3.5rem;">🎬</div>'}
+                        <div class="film-card-body">
+                            <div class="film-card-genre">🎭 {film['genre']}</div>
+                            <div class="film-card-title">{film['nama_film']}</div>
+                        </div>
+                    </div>
+                </a>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
 
         st.markdown("")  # spacing antar baris
 
@@ -242,7 +322,7 @@ else:
     if film_row.empty:
         st.error("Film tidak ditemukan.")
         if st.button("← Kembali ke Katalog"):
-            st.session_state["selected_film"] = None
+            st.query_params.clear()
             st.rerun()
         st.stop()
 
@@ -250,7 +330,7 @@ else:
 
     # Tombol kembali
     if st.button("← Kembali ke Katalog"):
-        st.session_state["selected_film"] = None
+        st.query_params.clear()
         st.rerun()
 
     st.markdown("---")
@@ -302,22 +382,44 @@ else:
     col_pos, col_neg = st.columns(2)
 
     with col_pos:
-        st.success("✅ Ringkasan Ulasan Positif")
         if pos_reviews:
             summary_pos = generate_summary(pos_reviews, n=3)
-            for i, kalimat in enumerate(summary_pos, 1):
-                st.write(f"{i}. {kalimat}")
+            items_html = "".join([f'<li class="summary-item">{s}</li>' for s in summary_pos])
+            st.markdown(f"""
+            <div class="summary-box summary-pos">
+                <div class="summary-box-title title-pos">✅ Ringkasan Ulasan Positif</div>
+                <ol class="summary-list">
+                    {items_html}
+                </ol>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.info("Belum ada ulasan positif untuk film ini.")
+            st.markdown("""
+            <div class="summary-box summary-pos">
+                <div class="summary-box-title title-pos">✅ Ringkasan Ulasan Positif</div>
+                <p style="color: #94a3b8; font-size: 0.95rem; margin: 0; padding-left: 0.5rem;">Belum ada ulasan positif untuk film ini.</p>
+            </div>
+            """, unsafe_allow_html=True)
 
     with col_neg:
-        st.error("❌ Ringkasan Ulasan Negatif")
         if neg_reviews:
             summary_neg = generate_summary(neg_reviews, n=3)
-            for i, kalimat in enumerate(summary_neg, 1):
-                st.write(f"{i}. {kalimat}")
+            items_html = "".join([f'<li class="summary-item">{s}</li>' for s in summary_neg])
+            st.markdown(f"""
+            <div class="summary-box summary-neg">
+                <div class="summary-box-title title-neg">❌ Ringkasan Ulasan Negatif</div>
+                <ol class="summary-list">
+                    {items_html}
+                </ol>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.info("Belum ada ulasan negatif untuk film ini.")
+            st.markdown("""
+            <div class="summary-box summary-neg">
+                <div class="summary-box-title title-neg">❌ Ringkasan Ulasan Negatif</div>
+                <p style="color: #94a3b8; font-size: 0.95rem; margin: 0; padding-left: 0.5rem;">Belum ada ulasan negatif untuk film ini.</p>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("---")
 

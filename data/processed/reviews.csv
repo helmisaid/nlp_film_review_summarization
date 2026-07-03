@@ -1,3 +1,4 @@
 id_ulasan,id_film,ulasan,sentiment
 1,1,"filmnya bagus, cuman ada sedikit yang kurang",positive
 2,1,"jujur buang buang waktu sih nontonnya, ga seru",negative
+3,1,"Film ini tidak membosankan sama sekali, justru alur ceritanya sangat seru dan menghibur dari awal sampai akhir.",positive
