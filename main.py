@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import pandas as pd
 import joblib
 import streamlit as st
@@ -8,103 +9,407 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.preprocess import clean_text
 from src.summarizer import generate_summary
 
-# --- Caching ---
+# =====================================================================
+# 3.1 — Setup Streamlit & Konfigurasi Halaman
+# =====================================================================
+
+st.set_page_config(
+    page_title="🎬 Film Review Summarizer",
+    page_icon="🎬",
+    layout="wide"
+)
+
+# --- Custom CSS ---
+st.markdown("""
+<style>
+/* ---- Global ---- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+
+/* ---- Header / hero ---- */
+.hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.15rem;
+}
+.hero-subtitle {
+    font-size: 1.05rem;
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+/* ---- Film card ---- */
+.film-card {
+    background: linear-gradient(145deg, #1e1e2e, #2a2a3d);
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.film-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25);
+}
+.film-card img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+}
+.film-card-body {
+    padding: 1rem 1.1rem 1.2rem;
+}
+.film-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin-bottom: 0.25rem;
+}
+.film-card-genre {
+    font-size: 0.82rem;
+    color: #a78bfa;
+    font-weight: 500;
+}
+
+/* ---- Detail page header ---- */
+.detail-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #e0e0e0;
+    margin-bottom: 0.3rem;
+}
+.detail-genre {
+    font-size: 0.95rem;
+    color: #a78bfa;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+.detail-desc {
+    font-size: 0.95rem;
+    color: #b0b0b0;
+    line-height: 1.65;
+}
+
+/* ---- Metrics ---- */
+div[data-testid="stMetric"] {
+    background: linear-gradient(145deg, #1e1e2e, #2a2a3d);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ---- Summary boxes ---- */
+.summary-header-pos {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #34d399;
+    margin-bottom: 0.5rem;
+}
+.summary-header-neg {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f87171;
+    margin-bottom: 0.5rem;
+}
+
+/* ---- Buttons general ---- */
+div.stButton > button {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* ---- Divider ---- */
+hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin: 2rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# =====================================================================
+# 3.2 — Pemuatan Aset & Model (dengan Caching)
+# =====================================================================
 
 @st.cache_resource
 def load_model():
+    """Muat model SVM dan TF-IDF vectorizer dari file pkl."""
     model = joblib.load("model/model_svm.pkl")
     vectorizer = joblib.load("model/vectorizer.pkl")
+    # Patch kompatibilitas: model dari sklearn 1.9.0 menyimpan probability='deprecated',
+    # sedangkan sklearn 1.8.0 memerlukan nilai integer/boolean di level C (libsvm).
+    if hasattr(model, "probability") and not isinstance(model.probability, (bool, int)):
+        model.probability = False
     return model, vectorizer
 
 
 @st.cache_data
 def load_data():
+    """Muat movies.csv dan reviews.csv."""
     movies = pd.read_csv("data/processed/movies.csv")
     reviews = pd.read_csv("data/processed/reviews.csv")
     return movies, reviews
 
 
-# --- Main ---
+# =====================================================================
+# Inisialisasi session state
+# =====================================================================
 
-st.title("Sistem Peringkasan Ulasan Film")
+if "selected_film" not in st.session_state:
+    st.session_state["selected_film"] = None
 
+# Muat data & model
 df_movies, df_reviews = load_data()
 model, vectorizer = load_model()
 
-# Pilih film
-film_names = df_movies["nama_film"].tolist()
-selected_name = st.selectbox("Pilih Film", film_names)
 
-selected_film = df_movies[df_movies["nama_film"] == selected_name].iloc[0]
-film_id = selected_film["id_film"]
+# =====================================================================
+# Routing: Katalog vs Detail
+# =====================================================================
 
-# Info film
-st.write(f"**Genre:** {selected_film['genre']}")
-st.write(f"**Deskripsi:** {selected_film['deskripsi']}")
+if st.session_state["selected_film"] is None:
+    # ==================================================================
+    # 3.3 — Halaman Utama: Katalog Film
+    # ==================================================================
 
-# Filter reviews
-film_reviews = df_reviews[df_reviews["id_film"] == film_id]
+    st.markdown('<p class="hero-title">🎬 Film Review Summarizer</p>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="hero-subtitle">'
+        'Sistem Peringkasan Ulasan Film Berbasis Graf Semantik — '
+        'Pilih film untuk melihat ringkasan sentimen dan tulis ulasan baru.'
+        '</p>',
+        unsafe_allow_html=True,
+    )
 
-pos_reviews = film_reviews[film_reviews["sentiment"] == "positive"]["ulasan"].tolist()
-neg_reviews = film_reviews[film_reviews["sentiment"] == "negative"]["ulasan"].tolist()
+    st.markdown("---")
 
-# Ringkasan
-st.subheader("Ringkasan Positif")
-if pos_reviews:
-    summary_pos = generate_summary(pos_reviews, n=3)
-    for i, s in enumerate(summary_pos, 1):
-        st.write(f"{i}. {s}")
+    # Tentukan jumlah kolom grid (maks 4 per baris)
+    num_films = len(df_movies)
+    cols_per_row = min(4, num_films) if num_films > 0 else 1
+
+    for row_start in range(0, num_films, cols_per_row):
+        cols = st.columns(cols_per_row)
+        for idx, col in enumerate(cols):
+            film_idx = row_start + idx
+            if film_idx >= num_films:
+                break
+            film = df_movies.iloc[film_idx]
+
+            with col:
+                # Poster film
+                poster_url = film["gambar"] if pd.notna(film["gambar"]) and str(film["gambar"]).startswith("http") and len(str(film["gambar"])) > 10 else None
+                if poster_url:
+                    st.image(poster_url, use_container_width=True)
+                else:
+                    # Placeholder visual jika URL poster tidak valid
+                    st.markdown(
+                        f'<div style="width:100%;height:280px;background:linear-gradient(135deg,#667eea,#764ba2);'
+                        f'border-radius:12px;display:flex;align-items:center;justify-content:center;'
+                        f'font-size:3rem;">🎬</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                # Nama film
+                st.subheader(film["nama_film"])
+
+                # Genre
+                st.caption(f"🎭 {film['genre']}")
+
+                # Tombol Lihat Detail
+                if st.button("📋 Lihat Detail", key=f"btn_{film['id_film']}"):
+                    st.session_state["selected_film"] = int(film["id_film"])
+                    st.rerun()
+
+        st.markdown("")  # spacing antar baris
+
 else:
-    st.write("Belum ada ulasan positif.")
+    # ==================================================================
+    # 3.4 — Halaman Detail Film
+    # ==================================================================
 
-st.subheader("Ringkasan Negatif")
-if neg_reviews:
-    summary_neg = generate_summary(neg_reviews, n=3)
-    for i, s in enumerate(summary_neg, 1):
-        st.write(f"{i}. {s}")
-else:
-    st.write("Belum ada ulasan negatif.")
+    selected_id = st.session_state["selected_film"]
 
-# Semua ulasan
-with st.expander(f"Semua Ulasan ({len(film_reviews)} ulasan)"):
-    if len(film_reviews) > 0:
-        st.dataframe(film_reviews[["ulasan", "sentiment"]])
-    else:
-        st.write("Belum ada ulasan untuk film ini.")
-
-# Form input ulasan baru
-st.subheader("Tulis Ulasan Baru")
-ulasan_baru = st.text_area("Masukkan ulasan Anda")
-
-if st.button("Analisis Sentimen"):
-    if ulasan_baru.strip():
-        cleaned = clean_text(ulasan_baru)
-        if cleaned:
-            vec = vectorizer.transform([cleaned])
-            pred = model.predict(vec)[0]
-            proba = model.predict_proba(vec)[0]
-            confidence = max(proba) * 100
-
-            if pred == 1:
-                sentiment = "positive"
-                st.success(f"Sentimen: POSITIF (confidence: {confidence:.1f}%)")
-            else:
-                sentiment = "negative"
-                st.error(f"Sentimen: NEGATIF (confidence: {confidence:.1f}%)")
-
-            # Simpan ke reviews.csv
-            new_id = df_reviews["id_ulasan"].max() + 1 if len(df_reviews) > 0 else 1
-            new_row = pd.DataFrame([{
-                "id_ulasan": new_id,
-                "id_film": film_id,
-                "ulasan": ulasan_baru,
-                "sentiment": sentiment
-            }])
-            df_reviews = pd.concat([df_reviews, new_row], ignore_index=True)
-            df_reviews.to_csv("data/processed/reviews.csv", index=False)
-            st.cache_data.clear()
+    # Filter data film
+    film_row = df_movies[df_movies["id_film"] == selected_id]
+    if film_row.empty:
+        st.error("Film tidak ditemukan.")
+        if st.button("← Kembali ke Katalog"):
+            st.session_state["selected_film"] = None
             st.rerun()
+        st.stop()
+
+    film = film_row.iloc[0]
+
+    # Tombol kembali
+    if st.button("← Kembali ke Katalog"):
+        st.session_state["selected_film"] = None
+        st.rerun()
+
+    st.markdown("---")
+
+    # Layout: poster (kiri) + metadata (kanan)
+    col_poster, col_info = st.columns([1, 2])
+
+    with col_poster:
+        poster_url = film["gambar"] if pd.notna(film["gambar"]) and str(film["gambar"]).startswith("http") and len(str(film["gambar"])) > 10 else None
+        if poster_url:
+            st.image(poster_url, use_container_width=True)
         else:
-            st.warning("Teks tidak dapat diproses. Pastikan ulasan berisi kata-kata yang valid.")
-    else:
-        st.warning("Harap isi ulasan terlebih dahulu.")
+            st.markdown(
+                '<div style="width:100%;height:380px;background:linear-gradient(135deg,#667eea,#764ba2);'
+                'border-radius:16px;display:flex;align-items:center;justify-content:center;'
+                'font-size:4rem;">🎬</div>',
+                unsafe_allow_html=True,
+            )
+
+    with col_info:
+        st.markdown(f'<p class="detail-title">{film["nama_film"]}</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="detail-genre">🎭 {film["genre"]}</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="detail-desc">{film["deskripsi"]}</p>', unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Filter ulasan film ini
+    film_reviews = df_reviews[df_reviews["id_film"] == selected_id]
+    pos_reviews_df = film_reviews[film_reviews["sentiment"] == "positive"]
+    neg_reviews_df = film_reviews[film_reviews["sentiment"] == "negative"]
+
+    pos_reviews = pos_reviews_df["ulasan"].tolist()
+    neg_reviews = neg_reviews_df["ulasan"].tolist()
+
+    # Metrik jumlah ulasan
+    m1, m2, m3 = st.columns(3)
+    m1.metric("📊 Total Ulasan", len(film_reviews))
+    m2.metric("👍 Ulasan Positif", len(pos_reviews))
+    m3.metric("👎 Ulasan Negatif", len(neg_reviews))
+
+    st.markdown("---")
+
+    # ==================================================================
+    # 5.4 — Tampilan Dual-Box Summary
+    # ==================================================================
+
+    st.subheader("📝 Ringkasan Ulasan")
+
+    col_pos, col_neg = st.columns(2)
+
+    with col_pos:
+        st.success("✅ Ringkasan Ulasan Positif")
+        if pos_reviews:
+            summary_pos = generate_summary(pos_reviews, n=3)
+            for i, kalimat in enumerate(summary_pos, 1):
+                st.write(f"{i}. {kalimat}")
+        else:
+            st.info("Belum ada ulasan positif untuk film ini.")
+
+    with col_neg:
+        st.error("❌ Ringkasan Ulasan Negatif")
+        if neg_reviews:
+            summary_neg = generate_summary(neg_reviews, n=3)
+            for i, kalimat in enumerate(summary_neg, 1):
+                st.write(f"{i}. {kalimat}")
+        else:
+            st.info("Belum ada ulasan negatif untuk film ini.")
+
+    st.markdown("---")
+
+    # ==================================================================
+    # 5.5 — Tampilan Daftar Ulasan Mentah
+    # ==================================================================
+
+    with st.expander(f"📋 Semua Ulasan ({len(film_reviews)} ulasan)"):
+        if len(film_reviews) > 0:
+            # Filter sentimen (opsional)
+            filter_sentiment = st.selectbox(
+                "Filter berdasarkan sentimen:",
+                ["Semua", "positive", "negative"],
+                key="filter_sentiment",
+            )
+
+            if filter_sentiment == "Semua":
+                df_display = film_reviews[["ulasan", "sentiment"]]
+            else:
+                df_display = film_reviews[film_reviews["sentiment"] == filter_sentiment][["ulasan", "sentiment"]]
+
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+        else:
+            st.write("Belum ada ulasan untuk film ini.")
+
+    st.markdown("---")
+
+    # ==================================================================
+    # 3.5 — Form Input Ulasan Baru
+    # ==================================================================
+
+    st.subheader("✍️ Tulis Ulasan Baru")
+
+    with st.form(key="form_ulasan"):
+        ulasan_baru = st.text_area(
+            "Masukkan ulasan Anda:",
+            height=120,
+            placeholder="Tulis pendapat Anda tentang film ini...",
+        )
+        submitted = st.form_submit_button("🔍 Analisis Sentimen")
+
+    if submitted:
+        if ulasan_baru.strip():
+            # 1. Bersihkan teks
+            cleaned = clean_text(ulasan_baru)
+
+            if cleaned:
+                try:
+                    # 2. Transform menggunakan vectorizer
+                    vec = vectorizer.transform([cleaned])
+
+                    # 3. Prediksi sentimen
+                    pred = model.predict(vec)[0]
+
+                    # 4. Hitung confidence
+                    #    Model dilatih dengan SVC(kernel='linear') tanpa probability=True,
+                    #    jadi gunakan decision_function sebagai skor kepercayaan.
+                    try:
+                        proba = model.predict_proba(vec)[0]
+                        confidence = max(proba) * 100
+                    except AttributeError:
+                        # Fallback: decision_function → sigmoid approximation
+                        import numpy as np
+                        decision = model.decision_function(vec)[0]
+                        confidence = float(1 / (1 + np.exp(-abs(decision)))) * 100
+
+                    # 5. Tentukan label sentimen (handle int 0/1 atau string)
+                    if pred in (1, "positive"):
+                        sentiment = "positive"
+                        st.success(f"✅ Sentimen: POSITIF (confidence: {confidence:.1f}%)")
+                    else:
+                        sentiment = "negative"
+                        st.error(f"❌ Sentimen: NEGATIF (confidence: {confidence:.1f}%)")
+
+                    # 6. Simpan ulasan baru ke reviews.csv
+                    new_id = int(df_reviews["id_ulasan"].max()) + 1 if len(df_reviews) > 0 else 1
+                    new_row = pd.DataFrame([{
+                        "id_ulasan": new_id,
+                        "id_film": selected_id,
+                        "ulasan": ulasan_baru,
+                        "sentiment": sentiment,
+                    }])
+                    updated_reviews = pd.concat([df_reviews, new_row], ignore_index=True)
+                    updated_reviews.to_csv("data/processed/reviews.csv", index=False)
+
+                    # 7. Refresh data & rerun
+                    st.cache_data.clear()
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ Terjadi kesalahan saat analisis: {e}")
+            else:
+                st.warning("⚠️ Teks tidak dapat diproses. Pastikan ulasan berisi kata-kata yang valid.")
+        else:
+            st.warning("⚠️ Harap isi ulasan terlebih dahulu.")
