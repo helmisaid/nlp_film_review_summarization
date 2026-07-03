@@ -249,6 +249,10 @@ if selected_id_param is not None:
 else:
     st.session_state["selected_film"] = None
 
+# Inisialisasi alert hasil analisis sentimen agar tidak hilang setelah rerun
+if "sentiment_alert" not in st.session_state:
+    st.session_state["sentiment_alert"] = None
+
 # Muat data & model
 df_movies, df_reviews = load_data()
 model, vectorizer = load_model()
@@ -453,6 +457,16 @@ else:
 
     st.subheader("✍️ Tulis Ulasan Baru")
 
+    # Tampilkan notifikasi hasil analisis sentimen jika ada (setelah rerun)
+    if st.session_state["sentiment_alert"] is not None:
+        alert_type, alert_msg = st.session_state["sentiment_alert"]
+        if alert_type == "success":
+            st.success(alert_msg)
+        else:
+            st.error(alert_msg)
+        # Hapus alert setelah ditampilkan agar tidak muncul terus-menerus
+        st.session_state["sentiment_alert"] = None
+
     with st.form(key="form_ulasan"):
         ulasan_baru = st.text_area(
             "Masukkan ulasan Anda:",
@@ -486,13 +500,13 @@ else:
                         decision = model.decision_function(vec)[0]
                         confidence = float(1 / (1 + np.exp(-abs(decision)))) * 100
 
-                    # 5. Tentukan label sentimen (handle int 0/1 atau string)
+                    # 5. Tentukan label sentimen & simpan hasil alert ke session state
                     if pred in (1, "positive"):
                         sentiment = "positive"
-                        st.success(f"✅ Sentimen: POSITIF (confidence: {confidence:.1f}%)")
+                        st.session_state["sentiment_alert"] = ("success", f"✅ Sentimen: POSITIF (confidence: {confidence:.1f}%)")
                     else:
                         sentiment = "negative"
-                        st.error(f"❌ Sentimen: NEGATIF (confidence: {confidence:.1f}%)")
+                        st.session_state["sentiment_alert"] = ("error", f"❌ Sentimen: NEGATIF (confidence: {confidence:.1f}%)")
 
                     # 6. Simpan ulasan baru ke reviews.csv
                     new_id = int(df_reviews["id_ulasan"].max()) + 1 if len(df_reviews) > 0 else 1

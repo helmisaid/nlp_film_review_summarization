@@ -36,7 +36,16 @@ def segment_sentences(reviews: list) -> list:
     """
     nltk.download('punkt_tab', quiet=True)
 
-    all_text = " ".join([r for r in reviews if isinstance(r, str) and r.strip()])
+    # Pastikan setiap ulasan diakhiri tanda baca akhir (. ! ?) agar tidak menyatu saat digabung
+    formatted_reviews = []
+    for r in reviews:
+        if isinstance(r, str) and r.strip():
+            review_str = r.strip()
+            if not review_str.endswith(('.', '!', '?')):
+                review_str += '.'
+            formatted_reviews.append(review_str)
+
+    all_text = " ".join(formatted_reviews)
 
     if not all_text.strip():
         return []
